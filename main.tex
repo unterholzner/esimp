@@ -1,0 +1,397 @@
+\documentclass{beamer}
+\usetheme{esimp}
+\usecolortheme{seagull} 
+
+% global font settings
+\usepackage[light,condensed,math]{iwona}
+\usepackage[T1]{fontenc}
+
+% global frame settings
+\setbeamersize{text margin left=0.2cm}    % set left frame margin
+\setbeamersize{text margin right=0.2cm}  % set right frame margin
+
+% packages
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage[customcolors,shade]{hf-tikz}  % colored box around equations
+\usepackage{multirow}  % table multirows
+\usepackage{tikz}
+\usepackage{multimedia}  % for sound file includes
+\usepackage{hyperref}      % required for package "multimedia"
+
+% automatic frame break
+\setbeamertemplate{frametitle continuation}[from second][\insertcontinuationtext]
+\setbeamertemplate{navigation symbols}{}  % suppress all navigation symbols
+\setbeamertemplate{sidebar right}{}
+
+% table settings
+\usepackage[table]{colortbl}   % text highlight
+\usepackage{booktabs}          % table style
+
+% overlay transparency percentage
+\setbeamercovered{transparent=10}  
+
+% New command definitions
+\newcommand{\tabhead}[1]{\textbf{#1}}
+\newcommand{\vm}[1]{\ensuremath{\bm{#1}}}  % vector or matrix
+\newcommand{\transparency}{0.9}  % transparency factor for images
+\DeclareMathOperator*{\argmax}{argmax} 
+
+\def\insertframetitle{}
+
+% ===========================
+\title[CS for Distant ASR]{Channel Selection for Distant Automatic Speech Recognition}
+\subtitle[on CHiME-5]{on the CHiME-5 dataset}
+\author[H. Unterholzner]{Hannes Unterholzner, BSc \\ [1em]{ Supervisor: \\ Assoc.Prof. Dipl.-Ing. Dr. Franz Pernkopf}}
+\date{Graz, March 14th, 2019}
+\institute[SPSC]{Signal Processing and Speech Communication Laboratory}
+\logo{\includegraphics[height=2em]{logo/tug}}
+
+% ===========================
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+  \tableofcontents
+\end{frame}
+
+
+
+%% ==============================================
+\section{Background: CHiME-5 challenge}
+\begin{frame}
+  \frametitle{CHiME-5 Challenge and Dataset}
+  
+  \fbox{
+  \hspace{-.75em}
+  \begin{minipage}[t]{0.5\textwidth}  
+  \textbf{Challenge:}
+
+  \begin{itemize}  
+    \item \textbf{Topic}: Distant multi-microphone conversational speech recognition in everyday home environments
+    \item \textbf{Baseline:} GMM-HMM, DNN-HMM, End-to-End
+    
+    \vspace{-1em}
+    {\scriptsize
+    \input{tab_baseline_results.tex}
+    }
+    
+    \begin{minipage}[b]{0.5\textwidth}    
+      \item \textbf{Floor plan:} Conventional and open-space apartments (e.g. session S09) 
+    \end{minipage}%
+    \begin{minipage}[c]{0.4\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{img/floorplan_S09}
+    \end{minipage}
+  
+  \end{itemize}
+
+  \end{minipage}
+ \hspace{-.25em}
+  }
+  %
+  \hfill
+  %
+  \pause
+  %
+  \fbox{
+  \hspace{-.75em}
+  \begin{minipage}[t]{0.44\textwidth}
+  \textbf{Dataset:}
+
+  \begin{itemize}
+    \item 20 sessions duration of $\sim2$h, \\ 
+    $4$ participants, \\
+    three rooms (kitchen, dining, living),  \\
+    6 Kinect arrays, 4 binaural mic's \\ 
+    $\rightarrow \underbrace{(6 \times 4)}_{\substack{\text{for} \\ \text{train/dev/eval}}} + \underbrace{(4 \times 2)}_{\substack{\text{train,dev} \\ \text{ transcript.}}} = 32$ ch.
+    %
+    \item \textbf{Characteristics:} \textcolor{tug_red}{noise}, \textcolor{tug_red}{far-field recordings}, \textcolor{tug_red}{simultaneous and spontaneous speech}, \textcolor{tug_red}{deviations within/among session/s} 
+    \item \textbf{Simultaneous speech (dev):}
+  \end{itemize}
+  \vspace{-1em}
+  \begin{figure}
+    \centering
+       \begin{tikzpicture}
+         \node[anchor=south west,inner sep=0] (B) at (4,0) {\includegraphics[width=.45\textwidth]{img/xtalk_S02}%
+    \includegraphics[width=.45\textwidth]{img/xtalk_S09}};
+         \only<1>{%
+         \fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
+    }
+        \end{tikzpicture}
+  \end{figure}
+ 
+  \end{minipage}  
+  \hspace{-.75em}
+  }    
+  
+\end{frame}
+
+
+
+%% ==============================================
+\section{Baseline}
+\begin{frame}
+  \frametitle{DNN-HMM Baseline System}
+  
+  \begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{img/conv_baseline_sketch}
+  \end{figure}  
+
+  \vspace{-.5em}  
+  \begin{minipage}[bt]{.7\textwidth}
+    \textbf{Three stages: }  
+
+    \begin{itemize}
+    \item Array synchronisation (correct clock drifts)
+    \item Speech enhancement (beamforming)
+    \item ASR system 
+      \begin{itemize}
+      \item several AM retraining stages
+      \item data, feature and model transformations
+      \end{itemize}
+    \end{itemize}
+    
+  \end{minipage}%
+  \begin{minipage}[tb]{.25\textwidth}
+    \begin{equation*}
+    \begin{split}
+      \tikzmarkin[disable rounded corners=true, color=tug_red!50]{a}(0.1,-0.1)(-0.1  ,0.4)
+      \text{DNN-HMM BL:} \\ WER = 82.5 \%
+      \tikzmarkend{a}
+    \end{split}
+    \end{equation*}  
+  \end{minipage}
+\end{frame}
+
+
+
+%% ==============================================
+\section{Oracle}
+\begin{frame}
+  \frametitle{Oracle}
+
+  \textbf{WER [\%] performance of the dev-set among channels (\textcolor{tug_orange}{variance}, \textcolor{tug_green}{gain}):}
+
+  \begin{itemize}
+  \item Ref. Kinect channels - U\_ref (4): $ min=82.36\%, max=82.72\% \rightarrow \textcolor{tug_orange}{0.36\%} / \textcolor{tug_green}{0.26\%}$
+  \item Beamformed Kinects - U+BfIt (5): $min=82.61\%, max=85.32\% \rightarrow \textcolor{tug_orange}{2.74\%} / \textcolor{tug_red}{-0.09\%}$
+  \item Kinects channels - U (20): $ min=83.39\%, max=85.68\% \rightarrow \textcolor{tug_orange}{2.29\%} / \textcolor{tug_red}{-0.87\%}$  
+  \end{itemize}  
+  
+    \vspace{.5em}
+
+  \pause
+
+  \begin{minipage}[tb]{.6\textwidth}
+  {
+  \textbf{On utterance-level $\rightarrow$ Oracle WER [\%] results:}   
+  \vspace{-.8em}
+  {\scriptsize
+    \input{tab_oracle_results}
+  }
+ \hspace{5em}\textcolor{tug_green}{\textbf{Performance gain: $18.9\%$}}
+  %\begin{equation*}
+   % \tikzmarkin[disable rounded corners=true, color=tug_green!40]{a}(-0.7,-0.2)(-0.1  ,-0.2)
+    %\text{Performance gain: } 18.9\%
+  %\end{equation*}
+  }
+  \end{minipage}%
+  \begin{minipage}[tb]{.4\textwidth}
+  \centering
+      \textbf{20 single ch. (WER/ranks):}
+      \vspace{-1.2em}   
+      \begin{figure}
+        \begin{tikzpicture}
+          \node[anchor=south west,inner sep=0] (B) at (4,0) {\includegraphics[width=9.5em]{img/oracle_dev_rank_wer_portrait}};
+          \only<1>{%
+          \fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
+    }
+        \end{tikzpicture}
+      \end{figure}
+  \end{minipage}
+\end{frame}
+
+
+
+%% ==============================================
+\section{Features}
+\begin{frame}
+  \frametitle{Channel Selection - Features}
+  \textbf{Channel selection:}
+  {\small
+  \begin{itemize}
+    \item \textbf{Method:} Deep Neural Network to classify "oracle channels"
+    \item \textbf{Labels:} Oracle results $\rightarrow$ multi-label, multi-class problem
+    \item \textbf{Features:} Signal-based and/or  decoder-based features correlating with oracle results       
+  \end{itemize}  
+  }
+  \fbox{
+  \begin{minipage}[t]{0.45\textwidth}
+  \textbf{Signal-based features:}
+  {\small
+    \begin{itemize}
+      \item Signal energy:
+      \vspace{-1em}
+      %
+      {\footnotesize
+      \begin{equation*}
+          x^{u}_m[n] = \frac{1}{N_e-N_s+1} \sum_{n = N_s}^{N_e} |s_m^u[n]|^2
+      \end{equation*}
+      }
+      %      
+      \vspace{-1em}
+      \item Peak of GCC-PHAT: 
+      {\footnotesize
+      \begin{equation*}      
+      \hat{R}_{i,ref}(d) = \mathcal{F}^{-1} \left( \frac{X_i(f)X^{*}_{ref}(f)}{|X_i(f)X^{*}_{ref}(f)|} \right)
+      \end{equation*}
+      }
+      %
+      \vspace{-1em}
+      \item Envelope variance:
+      \vspace{-1em}
+      %
+      {\footnotesize
+      \begin{equation*}
+        C^* = \argmax_{m} \sum_{k} w_m[k] \frac{V_m[k]}{\max\limits_{m} (V_m[k])}
+      \end{equation*}
+      }
+      %
+      \vspace{-1em}
+      \item Mel-filterbank
+    \end{itemize} 
+  }
+  \end{minipage}
+  }\hfill %
+  \pause
+  \fbox{
+  \begin{minipage}[t]{0.45\textwidth}  
+  \textbf{Decoder-based features:}
+
+    \begin{itemize}
+      \item Average posterior entropy:
+      %
+      {\footnotesize
+      \begin{align*}
+        H^m_t &= - \sum_{S} \vm{p}^m_t  \cdot log_2 \left( \vm{p}^m_t \right) \\
+        H^m_{avg} &= \frac{1}{T} \sum_{t=0}^{T} H^m_t 
+      \end{align*}
+      }
+      %
+      \item Average posterior moments: mean, variance, skewness, kurtosis
+    \end{itemize}  
+
+  \end{minipage}
+  }
+  
+\end{frame}
+
+
+
+%% ==============================================
+\section{Channel Selection Results}
+\begin{frame}
+  \frametitle{Channel Selection - Results}
+  \vspace{-.5em}
+  
+  \begin{figure}[!t]
+  \begin{minipage}[tb]{.55\textwidth}
+    \textbf{Feature direct classification:}
+    \vspace{-.8em}
+    {\scriptsize    
+    \input{tab_results_feature_direct} 
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[tb]{.42\textwidth}
+    \includegraphics[width=\textwidth]{img/wer_over_feat_ranks-S02.pdf}
+  \end{minipage}
+  \end{figure}
+  
+  \vspace{-.5em}  
+
+  \pause
+  
+  \begin{minipage}[tb]{.55\textwidth}
+    \textbf{DNN classification:}
+    \vspace{-.8em}
+    {\scriptsize    
+    \input{tab_results_dnn_classifier} 
+    }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[tb]{.42\textwidth}
+   \begin{figure}
+     \begin{tikzpicture}
+       \node[anchor=south west,inner sep=0] (B) at (4,0) {\includegraphics[width=\textwidth]{img/entropy_evaluation_results.pdf}};
+       \only<1>{%
+       \fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
+    }
+     \end{tikzpicture}
+    \end{figure}
+  \end{minipage}
+ 
+\end{frame}
+
+
+
+%% ==============================================
+\begin{frame}
+  \frametitle{Channel Selection - ROVER Results}
+  \textbf{Hypothesis fusion:}
+
+  \begin{itemize}
+    \item ROVER combination of the \{3, 5, 10, 20\}-best hypothesis as determined from the DNN-classifier
+    \item Combination for all features
+    \item \textbf{Upper baseline:} combine hypothesis from oracle ranking
+    \item \textbf{Lower baseline:} random combination of N hypothesis
+  \end{itemize}
+  
+  \begin{minipage}[tb]{.5\textwidth}
+  {\scriptsize
+  \input{tab_results_rover_combination}
+  }
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[tb]{.5\textwidth}
+  \includegraphics[width=\textwidth]{img/rover_top_results}
+  \end{minipage}
+\end{frame}
+
+
+
+%% ==============================================
+\section{Conclusion and Future Work}
+\begin{frame}
+  \frametitle{Conclusion and Future Work}
+  
+  \textbf{Summary:}
+
+  \begin{itemize} 
+    \item The oracle results show a high possible theoretical performance gain from a on utterance-level based channel selection.
+    \item Channel selection does not deliver notable improvements in WER \textcolor{tug_red}{$\rightarrow$ Informative value of the extracted features, difficulty of the dataset, bad network generalisation}. 
+  \end{itemize}
+  
+  \textbf{Ideas:}
+  \begin{itemize}
+    \item Investigation on a curated dataset to trace back the problem to the channel selection stage rather conflicting with a difficult dataset.
+    \item Application of other/more informative features, having a stronger correlation with the oracle labels. 
+  \end{itemize}
+  
+\end{frame}
+
+%% ==============================================
+\begin{frame}[plain]
+  \centering
+  %\sound[samplingrate=22050, bitspersample=16]{SOUND}{media/sample_audio_utterances/S18/test.aif}
+  \vspace{1.5em}
+  \includegraphics[width=3em]{img/speechwave}\Huge Thank you!
+\end{frame}
+
+\end{document}

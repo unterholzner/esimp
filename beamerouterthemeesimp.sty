@@ -1,0 +1,59 @@
+
+
+\defbeamertemplate*{headline}{esimp}
+{
+  \begin{beamercolorbox}[sep=0.5em]{headline}
+    \begin{minipage}[c]{1em}
+      \ifx\insertframetitle\@empty%
+      \else%     
+      \includegraphics[height=1.7em]{img/speechwave}
+      \fi
+    \end{minipage}%
+    \hspace{.5em}
+    \begin{minipage}[c]{10cm}
+      \hspace{0.5em} \usebeamerfont{frametitle} \usebeamercolor[fg]{frametitle} \insertframetitle 
+    \end{minipage}%
+    \hfill 
+    \begin{minipage}[c]{5.5em}
+      \insertlogo
+    \end{minipage}  
+  \end{beamercolorbox}
+}
+
+
+\defbeamertemplate*{footline}{esimp}
+{
+  \begin{beamercolorbox}[sep=0.5em]{footline}
+  \usebeamerfont{footline}\usebeamercolor[fg]{footline}
+   \insertshortauthor~- \insertshorttitle \hfill \insertshortdate \hfill \insertpagenumber~/ \insertpresentationendpage
+  \end{beamercolorbox}
+}
+
+
+\defbeamertemplate*{frametitle}{esimp}[1][left]
+{%
+  \ifbeamercolorempty[bg]{frametitle}{}{\nointerlineskip}%
+  \@tempdima=\textwidth%
+  \advance\@tempdima by\beamer@leftmargin%
+  \advance\@tempdima by\beamer@rightmargin%
+  \ifx\insertframesubtitle\@empty%
+  \else%
+     \begin{beamercolorbox}[sep=0.3cm,#1,wd=\the\@tempdima]{framesubtitle}
+        {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\strut\insertframesubtitle\par}% 
+        \vskip-0ex%
+        \if@tempswa\else\vskip-.3cm\fi% set inside beamercolorbox... evil here...
+      \end{beamercolorbox}%
+  \fi
+}
+
+\defbeamertemplate*{section in toc}{esimp}
+{\hskip1em
+ \begin{minipage}[c]{1em}  
+      \includegraphics[height=1em]{img/speechwave}
+    \end{minipage}%
+    \begin{minipage}[c]{10cm}
+      \hspace{0.5em} \usebeamerfont{section in toc}\usebeamercolor[fg]{section in toc} \inserttocsection 
+    \end{minipage}%
+\par}
+
+
