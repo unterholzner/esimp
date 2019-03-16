@@ -1,0 +1,84 @@
+\tikzstyle{state}=[circle,draw=black!50,fill=black!20,thick, inner sep=0pt, minimum size=2mm]
+\tikzstyle{pre}=[<-,shorten <=2pt,>=stealth',semithick]
+\tikzstyle{post}=[->,shorten >=1pt,>=stealth',semithick]
+
+\begin{tikzpicture}[above, node distance = 15mm]
+
+    \node [state]    (one) [label=left:WTN-1:]{};
+    \node [state]    (two)    [right of=one] {}
+        edge [pre]    node {a} (one);
+    \node [state]    (three)    [right of=two] {}
+        edge [pre]    node {b} (two);
+    \node [state]    (four)    [right of=three] {}
+        edge [pre]    node {d} (three);
+    \node [state]    (five)    [right of=four] {}
+        edge [pre]    node {d} (four);
+        
+    \node [state]    (one) [below of=one, node distance = 7mm, label=left:WTN-2:]{};
+    \node [state]    (two)    [right of=one] {}
+        edge [pre]    node {b} (one);
+    \node [state]    (three)    [right of=two] {}
+        edge [pre]    node {c} (two);
+    \node [state]    (four)    [right of=three] {}
+        edge [pre]    node {d} (three);
+    \node [state]    (five)    [right of=four] {}
+        edge [pre]    node {e} (four);
+        
+    \node [state]    (one) [below of=one, node distance = 7mm, label=left:WTN-3:]{};
+    \node [state]    (two)    [right of=one] {}
+        edge [pre]    node {b} (one);
+    \node [state]    (three)    [right of=two] {}
+        edge [pre]    node {f} (two);
+    \node [state]    (four)    [right of=three] {}
+        edge [pre]    node {e} (three);
+    \node [state]    (five)    [right of=four] {}
+        edge [pre]    node {e} (four);
+    \node [state]    (six)    [right of=five] {}
+        edge [pre]    node {g} (five);
+
+    \node [state]    (one) [below of=one, node distance = 15mm, label=left:ALIGN-1:]{};
+    \node [state]    (two)    [right of=one] {}
+       edge [pre]    node {@} (one)
+       edge [pre, out=100,in=80]    node {a} (one);
+    \node [state]    (three)    [right of=two] {}
+        edge [pre]    node {b} (two)
+        edge [pre, out=100,in=80]    node {b} (two);
+    \node [state]    (four)    [right of=three] {}
+        edge [pre]    node {c} (three)
+        edge [pre, out=100,in=80]    node {d} (three);
+    \node [state]    (five)    [right of=four] {}
+        edge [pre]    node {d} (four)
+        edge [pre, out=100,in=80]    node {d} (four);
+    \node [state]    (six)    [right of=five] {}
+        edge [pre]    node {e} (five)
+        edge [pre, out=100,in=80]    node {@} (five);
+        
+    \node [state]    (one) [below of=one, node distance = 15mm, label=left:ALIGN-2:]{};
+    \node [state]    (two)    [right of=one] {}
+       edge [pre]    node {@} (one)
+       edge [pre, out=100,in=80]    node {a} (one)
+       edge [pre, out=260,in=-80]    node {@} (one);
+    \node [state]    (three)    [right of=two] {}
+        edge [pre]    node {b} (two)
+        edge [pre, out=100,in=80]    node {b} (two)
+        edge [pre, out=260,in=-80]    node {b} (two);
+    \node [state]    (four)    [right of=three] {}
+        edge [pre, red]    node {c} (three)
+        edge [pre, red, out=100,in=80]    node {d} (three)
+        edge [pre, red, out=260,in=-80]    node {f} (three);
+    \node [state]    (five)    [right of=four] {}
+        edge [pre]    node {d} (four)
+        edge [pre, out=100,in=80]    node {d} (four)
+        edge [pre, out=260,in=-80]    node {e} (four);
+    \node [state]    (six)    [right of=five] {}
+        edge [pre]    node {e} (five)
+        edge [pre, out=100,in=80]    node {@} (five)
+        edge [pre, out=260,in=-80]    node {e} (five);
+    \node [state]    (seven)    [right of=six] {}
+        edge [pre]    node {@} (six)
+        edge [pre, out=100,in=80]    node {@} (six)
+        edge [pre, out=260,in=-80]    node {g} (six);
+        
+    \node[text width=5cm, below of=one, node distance = 15mm]
+    {Final hypothesis: @ b d d e @\\ Reference: a b c d e};
+\end{tikzpicture}

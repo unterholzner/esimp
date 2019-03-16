@@ -16,8 +16,10 @@
 \usepackage[customcolors,shade]{hf-tikz}  % colored box around equations
 \usepackage{multirow}  % table multirows
 \usepackage{tikz}
+\usetikzlibrary{arrows, snakes, backgrounds, positioning}
 \usepackage{multimedia}  % for sound file includes
 \usepackage{hyperref}      % required for package "multimedia"
+
 
 % automatic frame break
 \setbeamertemplate{frametitle continuation}[from second][\insertcontinuationtext]
@@ -36,6 +38,15 @@
 \newcommand{\vm}[1]{\ensuremath{\bm{#1}}}  % vector or matrix
 \newcommand{\transparency}{0.9}  % transparency factor for images
 \DeclareMathOperator*{\argmax}{argmax} 
+\newcommand{\m}[1]{\bm{#1}}
+\renewcommand{\vec}[1]{\bm{#1}} 
+\newcommand{\backupbegin}{
+\newcounter{finalframe}
+\setcounter{finalframe}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \setcounter{framenumber}{\value{finalframe}}
+}
 
 \def\insertframetitle{}
 
@@ -43,7 +54,7 @@
 \title[CS for Distant ASR]{Channel Selection for Distant Automatic Speech Recognition}
 \subtitle[on CHiME-5]{on the CHiME-5 dataset}
 \author[H. Unterholzner]{Hannes Unterholzner, BSc \\ [1em]{ Supervisor: \\ Assoc.Prof. Dipl.-Ing. Dr. Franz Pernkopf}}
-\date{Graz, March 14th, 2019}
+\date{Graz, March 15th, 2019}
 \institute[SPSC]{Signal Processing and Speech Communication Laboratory}
 \logo{\includegraphics[height=2em]{logo/tug}}
 
@@ -54,10 +65,10 @@
   \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-  \tableofcontents
-\end{frame}
+%\begin{frame}
+%\frametitle{Outline}
+%  \tableofcontents
+%\end{frame}
 
 
 
@@ -66,54 +77,49 @@
 \begin{frame}
   \frametitle{CHiME-5 Challenge and Dataset}
   
-  \fbox{
-  \hspace{-.75em}
-  \begin{minipage}[t]{0.5\textwidth}  
-  \textbf{Challenge:}
+  \vspace{-.5em}
+  \begin{minipage}[t]{0.49\textwidth}  
 
   \begin{itemize}  
-    \item \textbf{Topic}: Distant multi-microphone conversational speech recognition in everyday home environments
-    \item \textbf{Baseline:} GMM-HMM, DNN-HMM, End-to-End
-    
-    \vspace{-1em}
-    {\scriptsize
-    \input{tab_baseline_results.tex}
-    }
-    
-    \begin{minipage}[b]{0.5\textwidth}    
-      \item \textbf{Floor plan:} Conventional and open-space apartments (e.g. session S09) 
-    \end{minipage}%
-    \begin{minipage}[c]{0.4\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{img/floorplan_S09}
-    \end{minipage}
-  
+    \item \textbf{Topic}: Distant multi-microphone conversational speech recognition in everyday home environments    
+     %
+     \item Dataset: train, dev, and eval set
+     \item 20 sessions duration of $\sim2$h, \\ 
+      $4$ participants, \\
+      three rooms (kitchen, dining, living),  \\
+      6 Kinect arrays, 4 binaural mic's \\ 
+      $\rightarrow \underbrace{(6 \times 4)}_{\substack{\text{for} \\ \text{train/dev/eval}}} + \underbrace{(4 \times 2)}_{\substack{\text{train/dev} \\ \text{ transcript.}}} = 32$ ch.
+     %
+      \begin{minipage}[b]{0.5\textwidth}    
+      \vspace{1em}
+        \item \textbf{Floor plan:} Conventional and open-space apartments (e.g. session S09) 
+      \end{minipage}%
+      \begin{minipage}[c]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/floorplan_S09}
+      \end{minipage} 
   \end{itemize}
 
   \end{minipage}
- \hspace{-.25em}
-  }
   %
   \hfill
   %
   \pause
   %
-  \fbox{
-  \hspace{-.75em}
-  \begin{minipage}[t]{0.44\textwidth}
-  \textbf{Dataset:}
+  \begin{minipage}[t]{0.5\textwidth}
 
   \begin{itemize}
-    \item 20 sessions duration of $\sim2$h, \\ 
-    $4$ participants, \\
-    three rooms (kitchen, dining, living),  \\
-    6 Kinect arrays, 4 binaural mic's \\ 
-    $\rightarrow \underbrace{(6 \times 4)}_{\substack{\text{for} \\ \text{train/dev/eval}}} + \underbrace{(4 \times 2)}_{\substack{\text{train,dev} \\ \text{ transcript.}}} = 32$ ch.
+    \item \textbf{Baseline:} GMM-HMM, DNN-HMM, End-to-End
+    
+    %\vspace{-1em}
+    {\scriptsize
+    \input{tab_baseline_results.tex}
+    }
     %
     \item \textbf{Characteristics:} \textcolor{tug_red}{noise}, \textcolor{tug_red}{far-field recordings}, \textcolor{tug_red}{simultaneous and spontaneous speech}, \textcolor{tug_red}{deviations within/among session/s} 
     \item \textbf{Simultaneous speech (dev):}
   \end{itemize}
-  \vspace{-1em}
+    \vspace{-1em}
   \begin{figure}
     \centering
        \begin{tikzpicture}
@@ -126,15 +132,13 @@
   \end{figure}
  
   \end{minipage}  
-  \hspace{-.75em}
-  }    
   
 \end{frame}
 
 
 
 %% ==============================================
-\section{Baseline}
+\section{Baseline system and results}
 \begin{frame}
   \frametitle{DNN-HMM Baseline System}
   
@@ -153,7 +157,7 @@
     \item ASR system 
       \begin{itemize}
       \item several AM retraining stages
-      \item data, feature and model transformations
+      \item feature and model transformations
       \end{itemize}
     \end{itemize}
     
@@ -172,21 +176,21 @@
 
 
 %% ==============================================
-\section{Oracle}
+\section{Oracle analysis}
 \begin{frame}
-  \frametitle{Oracle}
+  \frametitle{Oracle analysis}
 
   \textbf{WER [\%] performance of the dev-set among channels (\textcolor{tug_orange}{variance}, \textcolor{tug_green}{gain}):}
 
   \begin{itemize}
   \item Ref. Kinect channels - U\_ref (4): $ min=82.36\%, max=82.72\% \rightarrow \textcolor{tug_orange}{0.36\%} / \textcolor{tug_green}{0.26\%}$
   \item Beamformed Kinects - U+BfIt (5): $min=82.61\%, max=85.32\% \rightarrow \textcolor{tug_orange}{2.74\%} / \textcolor{tug_red}{-0.09\%}$
-  \item Kinects channels - U (20): $ min=83.39\%, max=85.68\% \rightarrow \textcolor{tug_orange}{2.29\%} / \textcolor{tug_red}{-0.87\%}$  
+  \item Kinect channels - U (20): $ min=83.39\%, max=85.68\% \rightarrow \textcolor{tug_orange}{2.29\%} / \textcolor{tug_red}{-0.87\%}$  
   \end{itemize}  
   
     \vspace{.5em}
 
-  \pause
+ % \pause
 
   \begin{minipage}[tb]{.6\textwidth}
   {
@@ -209,9 +213,9 @@
       \begin{figure}
         \begin{tikzpicture}
           \node[anchor=south west,inner sep=0] (B) at (4,0) {\includegraphics[width=9.5em]{img/oracle_dev_rank_wer_portrait}};
-          \only<1>{%
-          \fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
-    }
+         % \only<1>{%
+          %\fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
+    %}
         \end{tikzpicture}
       \end{figure}
   \end{minipage}
@@ -279,8 +283,8 @@
       %
       {\footnotesize
       \begin{align*}
-        H^m_t &= - \sum_{S} \vm{p}^m_t  \cdot log_2 \left( \vm{p}^m_t \right) \\
-        H^m_{avg} &= \frac{1}{T} \sum_{t=0}^{T} H^m_t 
+        H^m_t &= - \sum_{S} p^m_{s,t}  \cdot log_2 \left( p^m_{s,t} \right) \\
+        H^m_{avg} &= \frac{1}{T} \sum_{t=1}^{T} H^m_t 
       \end{align*}
       }
       %
@@ -316,7 +320,7 @@
   
   \vspace{-.5em}  
 
-  \pause
+  %\pause
   
   \begin{minipage}[tb]{.55\textwidth}
     \textbf{DNN classification:}
@@ -330,9 +334,9 @@
    \begin{figure}
      \begin{tikzpicture}
        \node[anchor=south west,inner sep=0] (B) at (4,0) {\includegraphics[width=\textwidth]{img/entropy_evaluation_results.pdf}};
-       \only<1>{%
-       \fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
-    }
+       %\only<1>{%
+       %\fill [draw=none, fill=white, fill opacity=\transparency] (B.north west) -- (B.north east) -- (B.south east) -- (B.south west) -- (B.north west) -- cycle;
+   % }
      \end{tikzpicture}
     \end{figure}
   \end{minipage}
@@ -387,6 +391,8 @@
 \end{frame}
 
 %% ==============================================
+\appendix
+\backupbegin
 \begin{frame}[plain]
   \centering
   %\sound[samplingrate=22050, bitspersample=16]{SOUND}{media/sample_audio_utterances/S18/test.aif}
@@ -394,4 +400,91 @@
   \includegraphics[width=3em]{img/speechwave}\Huge Thank you!
 \end{frame}
 
+
+%####################################################
+%####################################################
+\bgroup
+\setbeamercolor{background canvas}{bg=black}
+\begin{frame}[plain]{}
+\end{frame}
+\egroup
+
+
+%% ==============================================
+\begin{frame}
+  \frametitle{ASR principle}
+  
+    Let's define: 
+    \vspace{-1em}
+      	\begin{align*}
+	      \vec{w} &= w_1. w_2, w_3, ..., w_n \leftarrow \text{sequence of words} \\
+	      \m{Y} &= \vec{y}_1, \vec{y}_2, \vec{y}_3, ..., \vec{y}_n  \leftarrow \text{sequence of     observation vectors}
+	    \end{align*}  
+  
+  
+  \begin{minipage}[tb]{0.57\textwidth}
+      \fbox{
+      \includegraphics[width=\textwidth]{img/ASR_overview}
+}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[b]{0.39\textwidth} 
+	  \begin{equation*}
+	    P(\vec{w} | \m{Y}) = \frac{P(\m{Y} | \vec{w}) P(\vec{w})}{P(\m{Y})}
+	  \end{equation*}
+	  \begin{equation*}
+      \vec{w^*} = \argmax_{\vec{w}} P(\m{Y} | \vec{w}) P(\vec{w})
+    \end{equation*}	
+    
+  \end{minipage}
+
+\end{frame}
+
+
+
+%% ==============================================
+\begin{frame}
+  \frametitle{\textbf{R}ecognizer \textbf{O}utput \textbf{V}oting \textbf{E}rror \textbf{R}eduction}
+  \framesubtitle{Illustration of the ROVER procedure with three different initial transcriptions/hypotheses:}
+  \begin{figure}
+    \centering
+    \input{rover_example}
+   % \caption{Illustration of the ROVER procedure with three different initial transcriptions from \cite{jalalvand2018automatic}.}
+    \label{fig:rover_procedure}
+  \end{figure}
+
+\end{frame}
+
+
+%% ==============================================
+\begin{frame}
+  \frametitle{Simultaneous speech}
+  \framesubtitle{\textcolor{gray}{train-set}, \textcolor{tug_green}{dev-set}, \textcolor{tug_red}{eval-set}}
+  
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/xtalk}
+  \end{figure}  
+ 
+\end{frame}
+
+%% ==============================================
+\begin{frame}
+  \frametitle{Visualized feature correlation with labels}
+  %\framesubtitle{Avg. posterior entropy for dev session S09:}
+  \begin{minipage}[tb]{0.495\textwidth}
+    \begin{figure}
+      \includegraphics[width=\textwidth]{img/avg_post_entropy-S09}
+      \caption{Normalized avg. posterior entropy.}
+    \end{figure}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[tb]{0.495\textwidth}
+  \begin{figure}
+      \includegraphics[width=\textwidth]{img/oracle_channels-S09.pdf}
+      \caption{Oracle channels in red.}
+  \end{figure}
+  \end{minipage}
+\end{frame}
+  
 \end{document}
